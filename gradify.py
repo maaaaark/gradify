@@ -11,9 +11,9 @@ class Gradify():
   """ Image Analyser
   Main class to do the analysis
   """
-  
+
   # Cross browser prefixes.
-  BROWSER_PREFIXES = ["", "-webkit-", "-moz-", "-o-", "-ms-"]
+  BROWSER_PREFIXES = ["-webkit-", "-moz-", "-o-", "-ms-", ""]
 
   # Demo browser execution
   DEMO_CMD = {
@@ -49,7 +49,7 @@ class Gradify():
       }
     }
     self.init_CLI_args()
-    
+
     if self.args.demo:
       self.demo_file = "demo.html"
       open(self.demo_file, "w").close()
@@ -84,7 +84,7 @@ class Gradify():
     foo = Image.open(fn)
     foo = foo.resize((100, 100), Image.ANTIALIAS)
     self.image = foo
-    
+
     col = self.get_colors()
 
     if self.args.single:
@@ -98,7 +98,7 @@ class Gradify():
 
     for i in range(len(col)):
       count = 0
-      # 0 - left, 1 - bottom, 2 - right, 3 - top 
+      # 0 - left, 1 - bottom, 2 - right, 3 - top
       a = [0]*4
       for pix in foo.getdata():
         if self.get_RGB_diff(pix,col[i])<4.2:
@@ -169,27 +169,29 @@ class Gradify():
 
   def printRules(self):
     for pair in self.pairs:
-      i = 0
+      css = ""
       if self.args.classname:
-        print(".%s-%d {" % (self.args.classname, pair[0]))
+        css += "."+self.args.classname+"-"+pair[0]+" {\n"
       else:
-        print(".gradify-%d {" % (pair[0]))
-      print("background:")
+        css += ".gradify-" + str(pair[0]) + " {\n"
+      css += "  background-color: "
       if self.args.single:
-        print "rgb(" + str(pair[1][0])+"," + str(pair[1][1]) +"," + str(pair[1][2]) +");"
+        css += "rgb(" + str(pair[1][0]) + "," + str(pair[1][1]) +"," + str(pair[1][2]) +");\n"
       else:
-        print "rgb(" + str(pair[1][0][0])+"," + str(pair[1][0][1]) +"," + str(pair[1][0][2]) +");"
+        css += "rgb(" + str(pair[1][0][0]) + "," + str(pair[1][0][1]) +"," + str(pair[1][0][2]) +");\n"
       if not self.args.single:
-        print("background:")
         for prefix in self.BROWSER_PREFIXES:
-          for color in pair[1]:
-            print prefix + "linear-gradient("+str(color[3])+"deg, rgba(" + str(color[0])+"," + str(color[1]) +"," + str(color[2]) +","+str(1)+") 0%, rgba(" + str(color[0])+"," + str(color[1]) +"," + str(color[2]) +",0) 100%)"
-            i += 1
-            if i==self.MAX_COLORS:
-              print ";"
+          css += "  background-image: "
+          for idx, color in enumerate(pair[1]):
+            css += prefix + "linear-gradient("+str(color[3])+"deg, rgba(" + str(color[0])+"," + str(color[1]) +"," + str(color[2]) +","+str(1)+") 0%, rgba(" + str(color[0])+"," + str(color[1]) +"," + str(color[2]) +",0) 100%)"
+            idx += 1
+            if idx != self.MAX_COLORS:
+              css += ", "
+            else:
+              css += ";\n"
               break
-            print ","
-      print("}")
+      css += "}\n"
+      print(css)
 
   def get_file(self, filen):
     self.image = Image.open(filen)
